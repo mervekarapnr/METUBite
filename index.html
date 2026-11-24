@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>METUBite | METU Campus Dining Guide</title>
+  <style>
+    :root {
+      --bg: #f0f7fd;
+      --surface: #ffffff;
+      --primary: #3b82f6;
+      --primary-light: #dbeafe;
+      --navy: #1e3a5f;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d6e8f8;
+      --amber-bg: #fef3c7;
+      --amber-text: #92400e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.4px;
+    }
+
+    .logo span {
+      color: var(--primary);
+    }
+
+    .add-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.55rem 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .add-btn:hover {
+      background: #2563eb;
+    }
+
+    .hero {
+      max-width: 1100px;
+      margin: 1.75rem auto 1.25rem;
+      padding: 0 1.25rem;
+    }
+
+    .hero h1 {
+      font-size: 1.9rem;
+      color: var(--navy);
+      margin-bottom: 0.35rem;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto 3rem;
+      padding: 0 1.25rem;
+    }
+
+    /* Campus Mini Map Box */
+    .map-panel {
+      background: linear-gradient(145deg, #e1f0fc 0%, #eef6fd 100%);
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .map-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.9rem;
+      font-size: 0.9rem;
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    .map-canvas {
+      position: relative;
+      height: 190px;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px dashed #93c5fd;
+      overflow: hidden;
+      background-image: radial-gradient(#bfdbfe 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .map-road {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: #e5effa;
+      transform: translateY(-50%);
+    }
+
+    .pin {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 3px 10px rgba(30, 58, 95, 0.2);
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .pin:hover,
+    .pin.selected {
+      background: var(--primary);
+      transform: translate(-50%, -55%) scale(1.06);
+      z-index: 3;
+    }
+
+    /* Controls */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.4rem;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 230px;
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-size: 0.94rem;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .tab {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--navy);
+      padding: 0.5rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    /* Cards Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(305px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .card.highlighted {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .card h3 {
+      font-size: 1.12rem;
+      color: var(--navy);
+    }
+
+    .badge {
+      background: var(--primary-light);
+      color: var(--navy);
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 0.22rem 0.6rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.85rem;
+    }
+
+    .dish-box {
+      background: #f8fbff;
+      border-left: 3px solid var(--primary);
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .review-note {
+      font-size: 0.85rem;
+      color: #4b5563;
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.75rem;
+      border-top: 1px solid #eef5fc;
+      font-size: 0.88rem;
+    }
+
+    .pp-score {
+      background: var(--amber-bg);
+      color: var(--amber-text);
+      font-weight: 700;
+      padding: 0.28rem 0.65rem;
+      border-radius: 8px;
+    }
+
+    .budget {
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 50;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      width: 100%;
+      max-width: 430px;
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .modal h2 {
+      color: var(--navy);
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+    }
+
+    .form-group {
+      margin-bottom: 0.85rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: var(--navy);
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.92rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.6rem;
+      margin-top: 1.1rem;
+    }
+
+    .cancel-btn {
+      background: #e5e7eb;
+      color: #374151;
+      border: none;
+      padding: 0.55rem 0.95rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">METU<span>Bite</span></div>
+    <button class="add-btn" id="openModalBtn">+ Add Spot / Review</button>
+  </nav>
+
+  <header class="hero">
+    <h1>Campus Dining & Price-Performance Guide</h1>
+    <p>Compare canteens, cafés, and student-favorite dishes across METU before waiting in line.</p>
+  </header>
+
+  <main class="container">
+    <section class="map-panel">
+      <div class="map-header">
+        <span>METU Campus Quick Map (Click a pin to highlight)</span>
+        <span id="selectedLabel" style="font-weight: 500; color: #3b82f6;">Showing all spots</span>
+      </div>
+      <div class="map-canvas" id="mapCanvas">
+        <div class="map-road"></div>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <input
+        type="text"
+        id="searchInput"
+        class="search-input"
+        placeholder="Search canteen, dish (e.g. toast, soup, coffee)..."
+      />
+      <div class="tabs" id="categoryTabs">
+        <button class="tab active" data-cat="All">All</button>
+        <button class="tab" data-cat="Main Meal">Main Meals</button>
+        <button class="tab" data-cat="Cafe & Study">Cafe & Study</button>
+        <button class="tab" data-cat="Quick Bite">Quick Bites</button>
+      </div>
+    </section>
+
+    <section class="grid" id="cardsGrid"></section>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <h2>Add a Campus Dining Review</h2>
+      <form id="spotForm">
+        <div class="form-group">
+          <label>Venue Name</label>
+          <input type="text" id="venueName" placeholder="e.g. Physics Canteen" required />
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="venueCat">
+            <option value="Main Meal">Main Meal</option>
+            <option value="Cafe & Study">Cafe & Study</option>
+            <option value="Quick Bite">Quick Bite</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Location / Department</label>
+          <input type="text" id="venueLoc" placeholder="e.g. Physics Dept. Ground Floor" required />
+        </div>
+        <div class="form-group">
+          <label>Recommended Dish</label>
+          <input type="text" id="venueDish" placeholder="e.g. Kaşarlı Tost & Ayran" required />
+        </div>
+        <div class="form-group">
+          <label>Price-Performance Score (1 - 10)</label>
+          <input type="number" id="venueScore" min="1" max="10" step="0.1" value="8.8" required />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" id="closeModalBtn">Cancel</button>
+          <button type="submit" class="add-btn">Save Spot</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const spots = [
+      {
+        id: 1,
+        name: "Central Cafeteria (Yemekhane)",
+        category: "Main Meal",
+        location: "Central Campus • Next to Library",
+        dish: "Lentil Soup & Grilled Chicken Menu",
+        review: "Unbeatable student price for a full 4-course lunch.",
+        score: 9.7,
+        budget: "₺ (Best Value)",
+        x: 48,
+        y: 42
+      },
+      {
+        id: 2,
+        name: "Çatı Cafe & Restaurant",
+        category: "Main Meal",
+        location: "Çarşı Building • Top Floor",
+        dish: "Chicken Fajita & Pasta Bowl",
+        review: "Generous portions, great place to sit with friends between classes.",
+        score: 8.6,
+        budget: "₺₺",
+        x: 34,
+        y: 62
+      },
+      {
+        id: 3,
+        name: "MM Building Canteen",
+        category: "Quick Bite",
+        location: "MM Building • Ground Floor",
+        dish: "Double Cheese Toast & Fresh Tea",
+        review: "Fast service before morning lectures and solid portion size.",
+        score: 9.1,
+        budget: "₺",
+        x: 64,
+        y: 34
+      },
+      {
+        id: 4,
+        name: "Sunshine Cafe",
+        category: "Cafe & Study",
+        location: "Next to Architecture Faculty",
+        dish: "Iced Americano & Cheesecake",
+        review: "Quiet atmosphere for laptop study sessions.",
+        score: 8.2,
+        budget: "₺₺",
+        x: 24,
+        y: 35
+      },
+      {
+        id: 5,
+        name: "EE Department Canteen",
+        category: "Quick Bite",
+        location: "Electrical & Electronics Eng.",
+        dish: "Gözleme & Ayran",
+        review: "Freshly made gözleme is worth the short wait at noon.",
+        score: 8.9,
+        budget: "₺",
+        x: 78,
+        y: 64
+      },
+      {
+        id: 6,
+        name: "Library Coffee Corner",
+        category: "Cafe & Study",
+        location: "METU Library Entrance",
+        dish: "Filter Coffee & Croissant",
+        review: "Most convenient caffeine stop during midterms.",
+        score: 8.0,
+        budget: "₺₺",
+        x: 52,
+        y: 72
+      }
+    ];
+
+    let activeCategory = "All";
+    let selectedSpotId = null;
+
+    const cardsGrid = document.getElementById("cardsGrid");
+    const mapCanvas = document.getElementById("mapCanvas");
+    const searchInput = document.getElementById("searchInput");
+    const selectedLabel = document.getElementById("selectedLabel");
+
+    function renderMap() {
+      mapCanvas.querySelectorAll(".pin").forEach((el) => el.remove());
+
+      spots.forEach((spot) => {
+        const pin = document.createElement("button");
+        pin.className = "pin" + (selectedSpotId === spot.id ? " selected" : "");
+        pin.style.left = spot.x + "%";
+        pin.style.top = spot.y + "%";
+        pin.textContent = spot.name.split(" ")[0];
+        pin.title = spot.name;
+
+        pin.addEventListener("click", () => {
+          selectedSpotId = selectedSpotId === spot.id ? null : spot.id;
+          selectedLabel.textContent = selectedSpotId
+            ? "Highlighted: " + spot.name
+            : "Showing all spots";
+          renderMap();
+          renderCards();
+        });
+
+        mapCanvas.appendChild(pin);
+      });
+    }
+
+    function renderCards() {
+      const q = searchInput.value.toLowerCase().trim();
+
+      const filtered = spots.filter((s) => {
+        const matchCat = activeCategory === "All" || s.category === activeCategory;
+        const matchText =
+          s.name.toLowerCase().includes(q) ||
+          s.dish.toLowerCase().includes(q) ||
+          s.location.toLowerCase().includes(q);
+        return matchCat && matchText;
+      });
+
+      cardsGrid.innerHTML = filtered
+        .map(
+          (s) => `
+          <article class="card ${selectedSpotId === s.id ? "highlighted" : ""}">
+            <div>
+              <div class="card-top">
+                <h3>${s.name}</h3>
+                <span class="badge">${s.category}</span>
+              </div>
+              <div class="meta">${s.location}</div>
+              <div class="dish-box">
+                <strong>Top Pick:</strong> ${s.dish}
+              </div>
+              <p class="review-note">"${s.review}"</p>
+            </div>
+            <div class="card-footer">
+              <span class="pp-score">P/P Score: ${s.score}/10</span>
+              <span class="budget">${s.budget}</span>
+            </div>
+          </article>
+        `
+        )
+        .join("");
+    }
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        activeCategory = tab.dataset.cat;
+        renderCards();
+      });
+    });
+
+    searchInput.addEventListener("input", renderCards);
+
+    // Modal logic
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    document.getElementById("openModalBtn").addEventListener("click", () => {
+      modalBackdrop.classList.add("open");
+    });
+    document.getElementById("closeModalBtn").addEventListener("click", () => {
+      modalBackdrop.classList.remove("open");
+    });
+
+    document.getElementById("spotForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const newSpot = {
+        id: Date.now(),
+        name: document.getElementById("venueName").value.trim(),
+        category: document.getElementById("venueCat").value,
+        location: document.getElementById("venueLoc").value.trim(),
+        dish: document.getElementById("venueDish").value.trim(),
+        review: "Added by METU student community.",
+        score: parseFloat(document.getElementById("venueScore").value).toFixed(1),
+        budget: "₺",
+        x: Math.floor(20 + Math.random() * 60),
+        y: Math.floor(25 + Math.random() * 50)
+      };
+
+      spots.unshift(newSpot);
+      e.target.reset();
+      modalBackdrop.classList.remove("open");
+      renderMap();
+      renderCards();
+    });
+
+    renderMap();
+    renderCards();
+  </script>
+</body>
+</html>
